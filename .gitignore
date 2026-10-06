@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.DS_Store
+# scratch exports; the reference output lives in stl/
+/*.stl
