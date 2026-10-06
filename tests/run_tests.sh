@@ -27,11 +27,11 @@ echo "== 3/4 parameter sweeps (OpenSCAD CLI -> STL -> independent reference)"
 python3 -I tests/param_sweep.py "$@"
 
 echo "== 4/4 committed default STL"
-if [[ -f stl/b25_mitchell_default.stl ]]; then
-    python3 -I tests/param_sweep.py --only none --aircraft-stl stl/b25_mitchell_default.stl
-    python3 -I tests/validate_stl.py stl/b25_mitchell_default.stl --span 286.05 --length 224.03 --tol 0.003
+if [[ -f stl/cessna_skymaster_default.stl ]]; then
+    python3 -I tests/param_sweep.py --only none --aircraft-stl stl/cessna_skymaster_default.stl
+    python3 -I tests/validate_stl.py stl/cessna_skymaster_default.stl --span 160.8 --length 125.97 --tol 0.003
 else
-    echo "(stl/b25_mitchell_default.stl not present - skipped)"
+    echo "(stl/cessna_skymaster_default.stl not present - skipped)"
 fi
 echo
 echo "ALL TESTS PASSED"

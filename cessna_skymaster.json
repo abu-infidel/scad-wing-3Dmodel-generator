@@ -1,0 +1,57 @@
+{
+    "fileFormatVersion": "1",
+    "parameterSets": {
+        "Cessna 337 Skymaster default": {
+            "root_airfoil": "2412",
+            "tip_airfoil": "2409",
+            "root_airfoil_override": "",
+            "tip_airfoil_override": "",
+            "root_thickness_scale": "1",
+            "tip_thickness_scale": "1",
+            "trailing_edge_thickness": "0",
+            "airfoil_blend_start": "-1",
+            "wing_span_m": "11.58",
+            "center_halfspan_m": "2.3",
+            "root_chord_m": "1.83",
+            "kink_chord_m": "1.83",
+            "tip_chord_m": "1.105",
+            "le_sweep_inboard_deg": "0",
+            "le_sweep_outboard_deg": "0",
+            "sweep_ref_chord_fraction": "0",
+            "wing_tip_round_m": "0.25",
+            "dihedral_center_deg": "3",
+            "dihedral_outer_deg": "3",
+            "root_incidence_deg": "1.5",
+            "tip_twist_deg": "-2",
+            "wing_le_station_m": "2.45",
+            "wing_z_m": "0.95",
+            "scale_denominator": "72"
+        },
+        "O-2A Skymaster (USAF) - 38 ft 2 in span, 202.5 sq ft, 29 ft 2 in long": {
+            "wing_span_m": "11.63",
+            "tip_chord_m": "1.127",
+            "stab_le_station_m": "7.72",
+            "fin_height_m": "0.73"
+        },
+        "Straight wing - NACA 2415 to 0009": {
+            "root_airfoil": "2415",
+            "tip_airfoil": "0009",
+            "tip_twist_deg": "-1"
+        },
+        "Long span - 13.5 m, NACA 4412 to 2409": {
+            "root_airfoil": "4412",
+            "wing_span_m": "13.5",
+            "center_halfspan_m": "2.6",
+            "tip_chord_m": "1.0",
+            "dihedral_outer_deg": "4"
+        },
+        "Thin wing - 80 percent thickness": {
+            "root_thickness_scale": "0.8",
+            "tip_thickness_scale": "0.9",
+            "trailing_edge_thickness": "0.004"
+        },
+        "Wheels-up display model": {
+            "show_landing_gear": "false"
+        }
+    }
+}

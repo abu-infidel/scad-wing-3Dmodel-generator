@@ -2,7 +2,7 @@
 
 Used by param_sweep.py to check the OpenSCAD output against a second implementation of the same
 published formulas (Abbott & von Doenhoff, "Theory of Wing Sections"). It deliberately shares no code
-with b25_mitchell.scad.
+with cessna_skymaster.scad.
 """
 import numpy as np
 

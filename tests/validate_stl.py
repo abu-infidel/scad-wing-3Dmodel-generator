@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate an STL produced by b25_mitchell.scad.
+"""Validate an STL produced by cessna_skymaster.scad.
 
 Usage:
     validate_stl.py model.stl [--span MM] [--length MM] [--root-thickness MM]

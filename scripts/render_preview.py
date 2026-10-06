@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render docs/preview.png (four views of an STL) with OpenSCAD's own preview renderer.
 
-    python3 scripts/render_preview.py stl/b25_mitchell_default.stl docs/preview.png
+    python3 scripts/render_preview.py stl/cessna_skymaster_default.stl docs/preview.png
 
 Needs openscad, xvfb-run (for a virtual display on headless machines) and Pillow.
 The STL is imported into a tiny helper .scad so the images need no CGAL render.
@@ -16,10 +16,10 @@ from PIL import Image, ImageDraw
 
 # name -> OpenSCAD --camera string "tx,ty,tz,rx,ry,rz,distance" (nose is +X)
 VIEWS = {
-    "Front three-quarter": "-22,0,0,63,0,35,450",
-    "Top": "-22,0,0,0,0,0,830",
-    "Front": "-22,0,0,90,0,90,560",
-    "Side": "-22,0,0,90,0,0,470",
+    "Front three-quarter": "-22,0,0,63,0,35,290",
+    "Top": "-22,0,0,0,0,0,490",
+    "Front": "-22,0,0,90,0,90,320",
+    "Side": "-22,0,0,90,0,0,260",
 }
 SIZE = (1100, 700)
 

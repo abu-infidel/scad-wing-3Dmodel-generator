@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Parameter-sweep tests for b25_mitchell.scad.
+"""Parameter-sweep tests for cessna_skymaster.scad.
 
 Builds STLs through the OpenSCAD command line with many -D overrides and compares spanwise
 cross-sections of the result with an independent reference model (naca_reference.py plus the
@@ -8,7 +8,7 @@ blending, thickness scaling, custom airfoils and model scale are all verified en
 
     python3 tests/param_sweep.py            # wing-only sweeps (fast)
     python3 tests/param_sweep.py --full     # also draft-quality whole-aircraft builds
-    python3 tests/param_sweep.py --aircraft-stl stl/b25_mitchell_default.stl   # check a finished default STL
+    python3 tests/param_sweep.py --aircraft-stl stl/cessna_skymaster_default.stl   # check a finished default STL
 """
 import argparse
 import json
@@ -28,21 +28,23 @@ sys.path.insert(0, HERE)
 import naca_reference as ref  # noqa: E402
 import validate_stl as vs  # noqa: E402
 
-SCAD = os.path.join(ROOT, "b25_mitchell.scad")
+SCAD = os.path.join(ROOT, "cessna_skymaster.scad")
 
-# B-25J defaults, mirrored from b25_mitchell.scad (the reference model must not read the SCAD file)
+# Cessna 337 Skymaster defaults, mirrored from cessna_skymaster.scad (the reference model must not read the SCAD file)
 DEFAULTS = {
-    "wing_span_m": 20.60, "center_halfspan_m": 3.99, "root_chord_m": 3.30, "kink_chord_m": 3.30,
-    "tip_chord_m": 1.51, "le_sweep_inboard_deg": 0.0, "le_sweep_outboard_deg": 3.0,
-    "sweep_ref_chord_fraction": 0.0, "wing_tip_round_m": 0.35,
-    "dihedral_center_deg": 4.64, "dihedral_outer_deg": 0.36, "root_incidence_deg": 2.0, "tip_twist_deg": -2.49,
-    "wing_le_station_m": 5.60, "wing_z_m": 0.05,
-    "root_airfoil": "23017", "tip_airfoil": "4409", "root_airfoil_override": "", "tip_airfoil_override": "",
+    "wing_span_m": 11.58, "center_halfspan_m": 2.30, "root_chord_m": 1.83, "kink_chord_m": 1.83,
+    "tip_chord_m": 1.105, "le_sweep_inboard_deg": 0.0, "le_sweep_outboard_deg": 0.0,
+    "sweep_ref_chord_fraction": 0.0, "wing_tip_round_m": 0.25,
+    "dihedral_center_deg": 3.0, "dihedral_outer_deg": 3.0, "root_incidence_deg": 1.5, "tip_twist_deg": -2.0,
+    "wing_le_station_m": 2.45, "wing_z_m": 0.95,
+    "root_airfoil": "2412", "tip_airfoil": "2409", "root_airfoil_override": "", "tip_airfoil_override": "",
     "root_thickness_scale": 1.0, "tip_thickness_scale": 1.0, "trailing_edge_thickness": 0.0,
     "airfoil_blend_start": -1.0, "scale_denominator": 72,
 }
 AF_N = {"draft": 14, "normal": 30, "high": 64}
 TIP_K = {"draft": 4, "normal": 8, "high": 14}
+
+DEFAULT_SET = "Cessna 337 Skymaster default"
 
 RESULTS = []
 
@@ -164,7 +166,7 @@ def test_wing_cases(workdir):
     custom_r = ref.loop("0015", 80, 0.0)
     custom_t = ref.loop("2412", 80, 0.0)
     cases = [
-        ("default_B25", {}),
+        ("default_Skymaster", {}),
         ("airfoils_2412_to_0009", {"root_airfoil": "2412", "tip_airfoil": "0009"}),
         ("airfoil_codes_by_text", {"root_airfoil": "0012", "tip_airfoil": "0012", "root_airfoil_override": "4412",
                                    "tip_airfoil_override": "23012"}),
@@ -247,6 +249,8 @@ def test_invalid_inputs(workdir):
         ("zero_chord", {"tip_chord_m": 0.0}, "chords must be positive"),
         ("tip_round_too_big", {"wing_tip_round_m": 9.0}, "wing_tip_round_m"),
         ("custom_airfoil_missing", {"root_airfoil": "custom"}, "custom airfoil"),
+        ("stabiliser_inside_pod", {"stab_le_station_m": 5.0}, "stab_le_station_m must be aft"),
+        ("fin_too_small", {"fin_below_m": 0.0}, "fin_height_m / fin_below_m too small"),
     ]
     for name, ov, msg in bad:
         proc, _ = run_openscad(os.path.join(workdir, name + ".stl"), ov)
@@ -276,13 +280,13 @@ def typed(params):
 
 
 def test_presets(workdir):
-    print("\n== parameter sets in b25_mitchell.json (-p file -P set)")
-    path = os.path.join(ROOT, "b25_mitchell.json")
+    print("\n== parameter sets in cessna_skymaster.json (-p file -P set)")
+    path = os.path.join(ROOT, "cessna_skymaster.json")
     if not os.path.exists(path):
-        check_true("presets", "b25_mitchell.json exists", False)
+        check_true("presets", "cessna_skymaster.json exists", False)
         return
     sets = json.load(open(path))["parameterSets"]
-    check_true("presets", "contains the B-25J default set", "B-25J default" in sets)
+    check_true("presets", "contains the default set", DEFAULT_SET in sets)
     check_true("presets", "contains at least 3 alternative sets", len(sets) >= 4, f"({len(sets)} sets)")
     for name, s in sets.items():
         out = os.path.join(workdir, "preset_" + "".join(ch if ch.isalnum() else "_" for ch in name) + ".stl")
@@ -304,41 +308,96 @@ def test_presets(workdir):
     # the default set must reproduce the plain defaults exactly
     a = os.path.join(workdir, "preset_default_check.stl")
     b = os.path.join(workdir, "plain_default.stl")
-    run_openscad(a, {}, part="wing_only", extra=["-p", path, "-P", "B-25J default"])
+    run_openscad(a, {}, part="wing_only", extra=["-p", path, "-P", DEFAULT_SET])
     run_openscad(b, {}, part="wing_only")
     ma, mb = trimesh.load(a, force="mesh"), trimesh.load(b, force="mesh")
-    check_true("presets", "B-25J default set == plain defaults",
+    check_true("presets", "default set == plain defaults",
                np.allclose(ma.bounds, mb.bounds, atol=1e-6) and abs(ma.volume - mb.volume) < 1e-6 * mb.volume)
 
 
-def test_aircraft_stl(path, label, k=1000 / 72, expect_gear=True):
-    """Checks on a finished whole-aircraft STL built with default geometry parameters."""
+# ---------------------------------------------------------------- whole aircraft / "no propellers"
+def engine_plane_radius(mesh, stations_m, k=1000 / 72, thrust_y=0.0, limit_m=1.2):
+    """Largest distance (m) from the thrust line of any surface point lying in the given engine planes.
+
+    stations_m are fuselage stations (m aft of the front cone tip). Points farther than limit_m from the
+    thrust line (tail booms, wing, struts) are ignored: the pod's own cones are far smaller than that,
+    while the 76 in (0.97 m radius) propeller of the real aircraft would register at about 0.97 m.
+    """
+    pivot = 2.45 + 0.25 * 1.83
+    worst = 0.0
+    for xs in stations_m:
+        segs = trimesh.intersections.mesh_plane(mesh, [1, 0, 0], [(pivot - xs) * k, 0, 0])
+        if len(segs) == 0:
+            continue
+        pts = np.asarray(segs).reshape(-1, 3)
+        r = np.hypot(pts[:, 1] - thrust_y, pts[:, 2]) / k
+        near = r[r < limit_m]
+        if len(near):
+            worst = max(worst, float(near.max()))
+    return worst
+
+
+FRONT_PLANE = (0.15, 0.25, 0.35)      # ahead of the front cowling lip (station 0.40 m): where the front propeller would turn
+REAR_PLANE = (6.55, 6.70, 6.85)       # behind the end of the pod (station 6.42 m): where the pusher propeller would turn
+
+
+def check_no_propellers(case, mesh, k=1000 / 72):
+    for name, stations in (("front", FRONT_PLANE), ("rear", REAR_PLANE)):
+        worst = engine_plane_radius(mesh, stations, k)
+        check_true(case, f"no propeller at the {name} engine plane (max radius {worst:.3f} m; cone <= 0.25 m, a 76 in propeller reaches 0.97 m)",
+                   worst <= 0.25)
+
+
+def test_no_propeller_source():
+    print("\n== this version has no propeller code or parameters")
+    text = open(SCAD).read()
+    import re
+    names = sorted(set(re.findall(r"\b(show_propellers?|propeller_[a-z_]+|prop_[a-z_]+|blade[a-z_0-9]*|BLADE[A-Z_0-9]*)\b", text)))
+    check_true("no_propeller_source", "cessna_skymaster.scad defines no propeller / blade identifiers", not names, str(names))
+
+
+def test_no_propeller_check_detects_blades():
+    """Negative control: the geometric check must flag a mesh that does carry a propeller blade."""
+    print("\n== negative control: the propeller check detects a blade")
+    k = 1000 / 72
+    pivot = 2.45 + 0.25 * 1.83
+    cone = trimesh.creation.cone(radius=0.2 * k, height=0.5 * k)
+    blade = trimesh.creation.box(extents=[0.03 * k, 0.2 * k, 1.9 * k])      # 1.9 m blade, up-down through the thrust line
+    blade.apply_translation([(pivot - 0.25) * k, 0, 0])
+    worst_with = engine_plane_radius(trimesh.util.concatenate([cone, blade]), FRONT_PLANE, k)
+    check_true("no_propeller_control", f"a 1.9 m blade at the front engine plane is detected (max radius {worst_with:.2f} m)", worst_with > 0.9)
+
+
+def test_aircraft_stl(path, label, k=1000 / 72, quality="high"):
+    """Checks on a finished whole-aircraft STL built with the default Skymaster parameters."""
     print(f"\n== whole aircraft: {label} ({path})")
     mesh = trimesh.load(path, force="mesh", process=True)
     metrics, faults = vs.basic_checks(mesh)
     check_true(label, f"mesh valid ({len(mesh.faces)} faces, {metrics['volume_mm3']:.0f} mm^3)", not faults, "; ".join(faults))
-    pivot = 5.60 + 0.25 * 3.30
+    pivot = 2.45 + 0.25 * 1.83
     lo, hi = mesh.bounds
-    check(label, "length: nose station 0 .. tail station 16.13 m (mm)", float(hi[0] - lo[0]), 16.13 * k, 0.003)
+    span_tol = 0.0045 if quality == "draft" else 0.0006
+    check(label, "length: front cone tip (station 0) .. rudder trailing edge (9.07 m) (mm)", float(hi[0] - lo[0]), 9.07 * k, 0.003)
     check(label, "nose position (+X end, mm)", float(hi[0]), pivot * k, 0.003)
-    check(label, "tail position (-X end, mm)", float(lo[0]), -(16.13 - pivot) * k, 0.003)
-    check(label, "span 20.60 m wing (mm)", float(hi[1] - lo[1]), 20.60 * k, 0.003)
-    if expect_gear:
-        check(label, "height with gear down vs published 4.98 m (mm)", float(hi[2] - lo[2]), 4.98 * k, 0.025)
+    check(label, "tail position (-X end, mm)", float(lo[0]), -(9.07 - pivot) * k, 0.003)
+    check(label, "wing span 11.58 m (mm)", float(hi[1] - lo[1]), 11.58 * k, span_tol)
+    check(label, "height with gear down vs published 2.84 m (mm)", float(hi[2] - lo[2]), 2.84 * k, 0.015)
+    check_no_propellers(label, mesh, k)
     return mesh
 
 
 def test_aircraft_variants(workdir):
     k = 1000 / 72
-    base = {"quality": "draft"}
     variants = [
         ("aircraft_default_draft", {}),
-        ("aircraft_no_gear_no_props", {"show_landing_gear": False, "show_propellers": False}),
-        ("aircraft_long_fuselage_wide_wing", {"fuselage_length_m": 18.0, "wing_span_m": 24.0}),
-        ("aircraft_other_airfoils", {"root_airfoil": "2415", "tip_airfoil": "0009", "dihedral_outer_deg": 3.0}),
-        ("aircraft_wing_fuselage_only", {"show_tail": False, "show_nacelles": False, "show_landing_gear": False,
-                                         "show_canopy_and_turret": False, "show_gun_barrels": False}),
+        ("aircraft_no_gear_no_struts", {"show_landing_gear": False, "show_wing_struts": False}),
+        ("aircraft_long_tail_wide_wing", {"stab_le_station_m": 8.5, "wing_span_m": 13.0}),
+        ("aircraft_other_airfoils", {"root_airfoil": "2415", "tip_airfoil": "0009", "dihedral_outer_deg": 5.0}),
+        ("aircraft_tall_fins_wide_booms", {"fin_height_m": 0.9, "boom_y_m": 2.6, "stab_span_m": 5.8}),
+        ("aircraft_wing_and_pod_only", {"show_tail": False, "show_wing_struts": False, "show_landing_gear": False,
+                                        "show_engine_cones": False}),
     ]
+    sizes = {}
     for name, ov in variants:
         print(f"\n== {name}  {ov if ov else '(defaults)'}")
         out = os.path.join(workdir, name + ".stl")
@@ -350,18 +409,24 @@ def test_aircraft_variants(workdir):
         metrics, faults = vs.basic_checks(mesh)
         check_true(name, f"mesh valid [{dt:.0f}s, {len(mesh.faces)} faces]", not faults, "; ".join(faults))
         lo, hi = mesh.bounds
-        p = {**DEFAULTS, **ov}
+        sizes[name] = float(mesh.volume)
         if name == "aircraft_default_draft":
-            test_aircraft_stl(out, name)
-        elif name == "aircraft_no_gear_no_props":
-            check_true(name, "no wheels below the nacelles (z min above -1.0 m)", lo[2] > -1.0 * k, f"zmin={lo[2]:.1f} mm")
-        elif name == "aircraft_long_fuselage_wide_wing":
-            check(name, "span 24 m (mm)", float(hi[1] - lo[1]), 24.0 * k, 0.004)
-            check(name, "length 18 m (mm)", float(hi[0] - lo[0]), 18.0 * k, 0.004)
+            test_aircraft_stl(out, name, quality="draft")
+        else:
+            check_no_propellers(name, mesh, k)
+        if name == "aircraft_no_gear_no_struts":
+            check_true(name, "no wheels: lowest point is the pod belly (z min above -0.7 m)", lo[2] > -0.7 * k, f"zmin={lo[2]:.1f} mm")
+            check_true(name, "removing gear and struts removes volume", mesh.volume < sizes.get("aircraft_default_draft", 1e30))
+        elif name == "aircraft_long_tail_wide_wing":
+            check(name, "span 13 m (mm)", float(hi[1] - lo[1]), 13.0 * k, 0.0045)
+            check(name, "length: tail moved aft 0.6 m -> 9.67 m (mm)", float(hi[0] - lo[0]), (9.07 + 0.6) * k, 0.003)
         elif name == "aircraft_other_airfoils":
-            check(name, "span unchanged (mm)", float(hi[1] - lo[1]), 20.6 * k, 0.004)
-        elif name == "aircraft_wing_fuselage_only":
-            check_true(name, "fins removed (z max below 1.7 m)", hi[2] < 1.7 * k, f"zmax={hi[2]:.1f} mm")
+            check(name, "span unchanged (mm)", float(hi[1] - lo[1]), 11.58 * k, 0.0045)
+        elif name == "aircraft_tall_fins_wide_booms":
+            check(name, "taller fins: height = 0.82 + 0.9 + 1.33 m (mm)", float(hi[2] - lo[2]), (0.82 + 0.9 + 1.33) * k, 0.015)
+        elif name == "aircraft_wing_and_pod_only":
+            check(name, "pod length 0.40 .. 6.42 m (mm)", float(hi[0] - lo[0]), 6.02 * k, 0.004)
+            check_true(name, "fins removed: highest point is the dihedral wing tip (z max below 1.45 m; the fin tops are at 1.52 m)", hi[2] < 1.45 * k, f"zmax={hi[2]:.1f} mm")
 
 
 def main():
@@ -383,6 +448,9 @@ def main():
         "preview": lambda: test_airfoil_preview(workdir),
         "presets": lambda: test_presets(workdir),
     }
+    # quick source/geometry self-checks of the "no propellers" requirement always run
+    test_no_propeller_source()
+    test_no_propeller_check_detects_blades()
     if args.only == "none":
         pass
     elif args.only in groups:
